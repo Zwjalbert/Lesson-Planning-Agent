@@ -1,0 +1,10 @@
+# Lesson Studio v2 dependencies (local single-machine)
+fastapi>=0.110,<1.0
+uvicorn[standard]>=0.29,<1.0
+python-dotenv>=1.0,<2.0
+openai>=1.40,<4.0
+python-docx>=1.1,<2.0
+python-pptx>=0.6.21,<2.0
+python-multipart>=0.0.9,<1.0
+pypdf>=4.2,<7.0
+openpyxl>=3.1,<4.0

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>资料查看 · 备课智能体</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23123c33'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23c9a961' font-family='serif'%3E%E5%A4%87%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/styles.css?v=2.1.3">
+<style id="pageStyle"></style>
+<style>
+  html, body { height: 100%; overflow: hidden; }
+  .v-top {
+    height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 18px;
+    background: var(--deep); color: #f3ecd9; position: relative; z-index: 10;
+  }
+  .v-top .back { color: #ffe1a0; font-size: 13px; white-space: nowrap; }
+  .v-top .back:hover { text-decoration: none; opacity: .85; }
+  .v-top .t { font-family: var(--serif); font-size: 15px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46vw; }
+  .v-top .spacer { flex: 1; }
+  .v-top .btn { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.16); color: #f3ecd9; }
+  .v-top .btn:hover { background: rgba(255,255,255,.18); }
+  .v-top .btn.gold { background: var(--gold); border-color: var(--gold); color: #fff; }
+  .v-main { display: flex; height: calc(100vh - 56px); }
+  .v-doc-wrap { flex: 1; overflow: auto; padding: 22px; background: var(--bg); }
+  .v-paper {
+    max-width: 880px; margin: 0 auto; background: #fff; border: 1px solid var(--line);
+    border-radius: 6px; box-shadow: 0 4px 24px rgba(35,50,42,.08); padding: 36px 44px;
+    font-family: var(--serif); font-size: 14px; line-height: 1.9; color: #2b332f;
+  }
+  .v-paper h1 { font-size: 22px; text-align: center; margin: 2px 0 16px; color: var(--deep); }
+  .v-paper h2 { font-size: 17px; color: var(--deep); margin: 22px 0 8px; border-left: 4px solid var(--gold-2); padding-left: 9px; }
+  .v-paper h3 { font-size: 15px; color: var(--deep); margin: 16px 0 6px; }
+  .v-paper p { margin: 7px 0; }
+  .v-paper .tbl-wrap { overflow-x: auto; margin: 10px 0; }
+  .v-paper table { width: 100%; border-collapse: collapse; font-family: var(--sans); font-size: 12.5px; }
+  .v-paper th, .v-paper td { border: 1px solid #a9a294; padding: 6px 8px; vertical-align: top; text-align: left; }
+  .v-paper th { background: #f2f2f2; font-weight: 700; }
+  .v-paper table.cols-2 th:first-child, .v-paper table.cols-2 td:first-child { width: 96px; white-space: nowrap; }
+  .v-paper ul, .v-paper ol { padding-left: 22px; margin: 6px 0; }
+  .v-paper blockquote { border-left: 3px solid var(--gold-2); background: #faf7ee; padding: 8px 12px; margin: 9px 0; color: #5c6b65; }
+  .v-paper code { background: #f0ece0; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  .v-paper.cw-paper { max-width: 1120px; padding: 0; background: transparent; border: 0; box-shadow: none; height: calc(100vh - 100px); }
+  .cw-frame { display: block; width: 100%; height: 100%; border: 0; border-radius: 10px; background: #f5efe2; }
+  .cw-hint { max-width: 1120px; margin: 0 auto 10px; color: var(--muted); font-size: 12px; }
+  .v-warn { max-width: 880px; margin: 0 auto 12px; border-left: 4px solid var(--gold-2); background: var(--gold-soft); color: #6d5a28; border-radius: 0 8px 8px 0; padding: 9px 13px; font-size: 12.5px; line-height: 1.7; }
+  .v-warn.err { border-color: #e0765c; background: #fbece6; color: #8a3d2a; }
+  .v-side {
+    width: 392px; flex: none; background: var(--paper); border-left: 1px solid var(--line);
+    display: flex; flex-direction: column; height: 100%; padding: 14px 14px 10px;
+  }
+  .v-side h3 { font-family: var(--serif); font-size: 14.5px; color: var(--deep); margin: 2px 0 8px; display: flex; align-items: center; gap: 7px; }
+  .v-side h3 .spacer { flex: 1; }
+  .v-chat { flex: 1; overflow-y: auto; padding: 2px; display: flex; flex-direction: column; gap: 8px; min-height: 120px; }
+  .v-chat .m { max-width: 94%; }
+  .v-chat .who { font-size: 10.5px; color: var(--faint); margin-bottom: 2px; }
+  .v-chat .b { border-radius: 10px; padding: 7px 11px; font-size: 12.5px; line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
+  .v-chat .u { align-self: flex-end; }
+  .v-chat .u .b { background: var(--deep); color: #f4ecd8; border-bottom-right-radius: 3px; }
+  .v-chat .u .who { text-align: right; }
+  .v-chat .a .b { background: var(--gold-soft); color: #4b4024; border: 1px solid #eee0bd; border-bottom-left-radius: 3px; }
+  .v-chat .s .b { background: #fff; border: 1px dashed var(--line); color: var(--faint); font-size: 11.5px; }
+  .v-input { border-top: 1px solid var(--line); padding-top: 9px; margin-top: 9px; }
+  .v-input textarea { width: 100%; min-height: 76px; max-height: 160px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.65; outline: none; background: #fff; }
+  .v-input textarea:focus { border-color: var(--gold-2); box-shadow: 0 0 0 3px rgba(201,169,97,.14); }
+  .v-input .row { display: flex; gap: 7px; margin-top: 7px; align-items: center; }
+  .v-input .btn { flex: none; }
+  .v-hint { font-size: 11px; color: var(--faint); line-height: 1.6; margin-top: 6px; }
+  .v-versions { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 9px; max-height: 150px; overflow: auto; }
+  .v-versions .vm { display: flex; align-items: center; gap: 7px; font-size: 11.5px; padding: 4px 0; border-bottom: 1px dashed var(--line-2); }
+  .v-versions .vm:last-child { border: 0; }
+  .v-versions .vm b { font-family: var(--mono); color: var(--green); }
+  .v-versions .vm span { color: var(--faint); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .v-toast { position: fixed; top: 68px; right: 18px; z-index: 99; display: flex; flex-direction: column; gap: 7px; }
+  .v-loading { position: fixed; inset: 56px 0 0 0; background: rgba(244,241,232,.7); display: grid; place-items: center; z-index: 50; color: var(--muted); font-size: 13px; }
+  .v-loading.hide { display: none; }
+  @media (max-width: 900px) {
+    html, body { overflow: auto; }
+    .v-main { display: block; height: auto; }
+    .v-doc-wrap { padding: 12px; }
+    .v-paper { padding: 22px 18px; }
+    .v-side { width: auto; height: auto; border-left: 0; border-top: 1px solid var(--line); }
+    .v-chat { max-height: 280px; }
+    .v-top .t { max-width: 36vw; }
+    .v-top .hide-m { display: none; }
+  }
+  @media print {
+    .v-top, .v-side, .v-warn, .v-toast { display: none !important; }
+    .v-main, .v-doc-wrap { display: block; height: auto; overflow: visible; padding: 0; background: #fff; }
+    .v-paper { border: 0; box-shadow: none; max-width: none; padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="v-top">
+  <a class="back" href="/">← 返回工作台</a>
+  <span class="t" id="title">加载中…</span>
+  <span id="status"></span>
+  <span class="spacer"></span>
+  <a class="btn ghost sm hide-m" id="lnkDocx" target="_blank">docx</a>
+  <a class="btn ghost sm hide-m" id="lnkHtml" target="_blank">HTML</a>
+  <a class="btn ghost sm hide-m" id="lnkMd" target="_blank">Markdown</a>
+  <button class="btn ghost sm" id="btnPrint">打印 / PDF</button>
+  <button class="btn ghost sm" id="btnReload">刷新</button>
+  <button class="btn gold sm" id="btnApprove">另存为定稿</button>
+</header>
+<main class="v-main">
+  <section class="v-doc-wrap">
+    <div class="v-warn hide" id="warn"></div>
+    <article class="v-paper" id="doc"></article>
+  </section>
+
+  <aside class="v-side">
+    <h3>对 AI 提出修改要求<span class="spacer"></span><span class="badge pending" id="revBadge">v1</span></h3>
+    <div class="v-chat" id="chat">
+      <div class="m s"><div class="b">像和助教说话一样提要求：换案例、调节奏、改思政点、补充实训任务。修改会生成完整新版并保留结构，可连续多轮。</div></div>
+    </div>
+    <div class="v-input">
+      <textarea id="req" placeholder="例如：把导入换成校园快递站排队的案例；思政点再自然一些；精简讲授环节。"></textarea>
+      <div class="row"><span class="v-hint" style="flex:1">Ctrl / ⌘ + Enter 发送</span>
+        <button class="btn gold" id="btnSend">发送并修改</button></div>
+      <div class="v-hint" id="hint">修改由大模型完成，约 30-90 秒；满意后点右上「另存为定稿」（门 B）。</div>
+    </div>
+    <div class="v-versions" id="versions"></div>
+  </aside>
+</main>
+
+<div class="v-toast" id="toast"></div>
+<div class="v-loading" id="loading">正在读取文件…</div>
+
+<script src="/static/md.js?v=2.1.3"></script>
+<script>
+(function () {
+  'use strict';
+  var parts = location.pathname.split('/').filter(Boolean);
+  var CID, AID;
+  if (parts[0] === 'api' && parts[1] === 'course') { CID = Number(parts[2]); AID = Number(parts[4]); }
+  else { CID = Number(parts[1] || 0); AID = Number(parts[2] || 0); }
+  if (!CID || !AID) { location.href = '/'; return; }
+  var S = { a: null, history: [] };
+  var $ = function (s) { return document.querySelector(s); };
+  var h = window.MD.esc;
+
+  function toast(msg) {
+    var el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    $('#toast').appendChild(el);
+    setTimeout(function () { el.remove(); }, 3200);
+  }
+
+  function badge(st) {
+    var map = { review: ['待确认', 'review'], revising: ['修订中', 'revising'], approved: ['已定稿', 'approved'], drafting: ['生成中', 'drafting'], pending: ['待生成', 'pending'], failed: ['失败', 'failed'] };
+    var x = map[st] || [st, 'pending'];
+    return '<span class="badge ' + x[1] + '">' + x[0] + '</span>';
+  }
+
+  function load() {
+    $('#loading').classList.remove('hide');
+    fetch('/api/course/' + CID + '/artifact/' + AID, { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j.ok) throw new Error(j.msg || '读取失败');
+        S.a = j.artifact;
+        render();
+      })
+      .catch(function (e) {
+        $('#doc').innerHTML = '<div class="empty">' + h(e.message) + '</div>';
+        $('#loading').classList.add('hide');
+      });
+  }
+
+  function render() {
+    var a = S.a;
+    document.title = '第' + a.week_no + '周 ' + (a.file_type_cn || a.file_type) + ' · 备课智能体';
+    $('#title').textContent = '第 ' + a.week_no + ' 周 · ' + (a.file_type_cn || a.file_type);
+    $('#status').innerHTML = badge(a.status);
+    var isCW = a.file_type === 'courseware';
+    var doc = $('#doc');
+    if (isCW) {
+      doc.className = 'v-paper cw-paper';
+      doc.innerHTML = '<iframe class="cw-frame" src="/api/artifact/' + AID + '/preview" title="互动课件"></iframe>';
+    } else {
+      doc.className = 'v-paper';
+      doc.innerHTML = window.MD.render(a.content || '（内容为空）');
+    }
+    $('#revBadge').textContent = 'v' + (a.revision || 1);
+    var warn = $('#warn');
+    var issues = (a.issues && a.issues.length) ? a.issues : (a.warnings ? [a.warnings] : []);
+    if (issues.length) {
+      warn.classList.remove('hide');
+      warn.innerHTML = '<b>校验提示：</b>' + h(issues.join('；')) + '。可让 AI 修改，或人工核对后定稿。';
+    } else {
+      warn.classList.add('hide');
+    }
+    var canReview = a.status === 'review' || a.status === 'revising';
+    $('#btnApprove').disabled = !canReview;
+    $('#btnApprove').style.opacity = canReview ? '1' : '.45';
+    $('#btnApprove').textContent = canReview ? '另存为定稿' : (a.status === 'approved' ? '已定稿' : '暂不可定稿');
+    if (isCW) {
+      $('#lnkDocx').textContent = 'PPTX';
+      $('#lnkDocx').href = '/api/artifact/' + AID + '/export?fmt=pptx';
+      $('#lnkHtml').textContent = '互动HTML';
+      $('#lnkHtml').href = '/api/artifact/' + AID + '/export?fmt=html';
+      $('#lnkMd').style.display = 'none';
+      $('#btnPrint').textContent = '打开互动课件';
+    } else {
+      $('#lnkDocx').textContent = 'docx';
+      $('#lnkDocx').href = '/api/artifact/' + AID + '/export?fmt=docx';
+      $('#lnkHtml').textContent = 'HTML';
+      $('#lnkHtml').href = '/api/artifact/' + AID + '/export?fmt=html';
+      $('#lnkMd').style.display = '';
+      $('#lnkMd').href = '/api/artifact/' + AID + '/export?fmt=md';
+      $('#btnPrint').textContent = '打印 / PDF';
+    }
+    $('#pageStyle').textContent = a.file_type === 'lesson_plan'
+      ? '@media print{@page{size:A4 landscape;margin:12mm}}'
+      : '@media print{@page{size:A4 portrait;margin:18mm}}';
+    renderVersions(a.revisions || []);
+    $('#loading').classList.add('hide');
+    if (new URLSearchParams(location.search).get('print') === '1' && !S.printed) {
+      S.printed = true;
+      setTimeout(function () { window.print(); }, 700);
+    }
+  }
+
+  function renderVersions(list) {
+    var box = $('#versions');
+    if (!list.length) { box.innerHTML = '<div class="v-hint">暂无版本历史。</div>'; return; }
+    box.innerHTML = '<div class="v-hint" style="margin-bottom:3px">版本历史（点「恢复」可回退）</div>' + list.slice(0, 12).map(function (v) {
+      return '<div class="vm"><b>v' + v.version + '</b><span>' + h(v.feedback || v.source || '') + ' · ' + String(v.created_at || '').slice(5, 16) + '</span>' +
+        '<button class="btn link sm" data-restore="' + v.id + '">恢复</button></div>';
+    }).join('');
+  }
+
+  function addMsg(role, text) {
+    var who = role === 'u' ? '你' : '备课智能体';
+    var cls = role === 'u' ? 'u' : (role === 's' ? 's' : 'a');
+    var el = document.createElement('div');
+    el.className = 'm ' + cls;
+    el.innerHTML = '<div class="who">' + who + '</div><div class="b">' + h(text) + '</div>';
+    $('#chat').appendChild(el);
+    $('#chat').scrollTop = $('#chat').scrollHeight;
+  }
+
+  function send() {
+    var req = ($('#req').value || '').trim();
+    if (!req) { toast('请填写修改要求'); return; }
+    if (!S.a) return;
+    addMsg('u', req);
+    $('#req').value = '';
+    var btn = $('#btnSend');
+    btn.disabled = true; btn.innerHTML = '<span class="spin"></span>修改中';
+    $('#hint').textContent = '大模型正在修改，请稍候（约 30-90 秒）…';
+    fetch('/api/course/' + CID + '/artifact/' + AID + '/edit', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requirement: req })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j.ok) throw new Error(j.msg || '修改失败');
+      S.a.content = j.content;
+      S.a.model = j.model;
+      S.a.warnings = j.warns;
+      S.a.revision = (S.a.revision || 1) + 1;
+      render();
+      addMsg('a', '已按要求修改完成。' + (j.warns ? '（校验提示：' + j.warns + '）' : ''));
+      $('#hint').textContent = '已修改。可继续提要求，满意后点右上「另存为定稿」。';
+      fetch('/api/course/' + CID + '/artifact/' + AID).then(function (r) { return r.json(); }).then(function (x) {
+        if (x.ok) { S.a.revisions = x.artifact.revisions; renderVersions(x.artifact.revisions || []); S.a.status = x.artifact.status; render(); }
+      });
+    }).catch(function (e) {
+      addMsg('a', '修改失败：' + e.message);
+      $('#hint').textContent = '修改失败：' + e.message;
+    }).finally(function () {
+      btn.disabled = false; btn.textContent = '发送并修改';
+    });
+  }
+
+  function approve() {
+    var btn = $('#btnApprove');
+    btn.disabled = true; btn.textContent = '保存中…';
+    fetch('/api/artifact/' + AID + '/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      .then(function (r) { return r.json(); }).then(function (j) {
+        if (!j.ok) throw new Error(j.msg || '保存失败');
+        S.a.status = 'approved';
+        render();
+        addMsg('a', '已另存为定稿（门 B 通过）。' + (j.auto && j.auto.started ? '系统已自动续跑下游文件。' : ''));
+        toast('已定稿');
+      }).catch(function (e) {
+        toast('保存失败：' + e.message);
+        btn.disabled = false; render();
+      });
+  }
+
+  document.addEventListener('click', function (e) {
+    var rb = e.target.closest('[data-restore]');
+    if (rb) {
+      var rid = rb.getAttribute('data-restore');
+      fetch('/api/artifact/' + AID + '/restore/' + rid, { method: 'POST' })
+        .then(function (r) { return r.json(); }).then(function (j) {
+          if (!j.ok) throw new Error(j.msg || '恢复失败');
+          toast('已回退到历史版本');
+          load();
+        }).catch(function (err) { toast('恢复失败：' + err.message); });
+    }
+  });
+
+  $('#btnSend').addEventListener('click', send);
+  $('#btnApprove').addEventListener('click', approve);
+  $('#btnReload').addEventListener('click', load);
+  $('#btnPrint').addEventListener('click', function () {
+    if (S.a && S.a.file_type === 'courseware') {
+      window.open('/api/artifact/' + AID + '/preview', '_blank');
+    } else {
+      window.print();
+    }
+  });
+  $('#req').addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') send();
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>
